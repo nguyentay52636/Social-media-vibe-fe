@@ -1,15 +1,428 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model calls {
+  id                             Int      @id @default(autoincrement())
+  caller_id                      Int?
+  receiver_id                    Int?
+  type                           String?  @db.VarChar(255)
+  status                         String?  @db.VarChar(255)
+  start_time                     DateTime @default(now()) @db.Timestamp(0)
+  end_time                       DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  users_calls_caller_idTousers   users?   @relation("calls_caller_idTousers", fields: [caller_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "calls_ibfk_1")
+  users_calls_receiver_idTousers users?   @relation("calls_receiver_idTousers", fields: [receiver_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "calls_ibfk_2")
+
+  @@index([caller_id], map: "caller_id")
+  @@index([receiver_id], map: "receiver_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model comment_media {
+  id         Int       @id @default(autoincrement())
+  comment_id Int?
+  media_url  String?   @db.VarChar(255)
+  media_type String?   @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  comments   comments? @relation(fields: [comment_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comment_media_ibfk_1")
+
+  @@index([comment_id], map: "comment_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model comments {
+  id             Int             @id @default(autoincrement())
+  post_id        Int?
+  user_id        Int?
+  content        String?         @db.Text
+  created_at     DateTime        @default(now()) @db.Timestamp(0)
+  parent_id      Int?
+  comment_media  comment_media[]
+  posts          posts?          @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comments_ibfk_1")
+  users          users?          @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comments_ibfk_2")
+  comments       comments?       @relation("commentsTocomments", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "comments_ibfk_3")
+  other_comments comments[]      @relation("commentsTocomments")
+
+  @@index([parent_id], map: "parent_id")
+  @@index([post_id], map: "post_id")
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model conversation_participants {
+  conversation_id Int
+  user_id         Int
+  role            String?       @db.VarChar(255)
+  joined_at       DateTime      @default(now()) @db.Timestamp(0)
+  left_at         DateTime      @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  conversations   conversations @relation(fields: [conversation_id], references: [id], onUpdate: Restrict, map: "conversation_participants_ibfk_1")
+  users           users         @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "conversation_participants_ibfk_2")
+
+  @@id([conversation_id, user_id])
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model conversations {
+  id                                               Int                         @id @default(autoincrement())
+  type                                             String?                     @db.VarChar(255)
+  name                                             String?                     @db.VarChar(255)
+  avatar                                           String?                     @db.VarChar(255)
+  created_by                                       Int?
+  last_message_id                                  Int?
+  is_active                                        Boolean?                    @default(true)
+  created_at                                       DateTime                    @default(now()) @db.Timestamp(0)
+  updated_at                                       DateTime                    @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  conversation_participants                        conversation_participants[]
+  users                                            users?                      @relation(fields: [created_by], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "conversations_ibfk_1")
+  messages_conversations_last_message_idTomessages messages?                   @relation("conversations_last_message_idTomessages", fields: [last_message_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "conversations_ibfk_2")
+  messages_messages_conversation_idToconversations messages[]                  @relation("messages_conversation_idToconversations")
+
+  @@index([created_by], map: "created_by")
+  @@index([last_message_id], map: "last_message_id")
+}
+
+model events {
+  id           Int      @id @default(autoincrement())
+  title        String?  @db.VarChar(255)
+  description  String?  @db.Text
+  location     String?  @db.VarChar(255)
+  start_date   DateTime @default(now()) @db.Timestamp(0)
+  end_date     DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  image        String?  @db.VarChar(255)
+  organizer_id Int?
+  attendees    Int?     @default(0)
+  interested   Int?     @default(0)
+  price        String?  @db.VarChar(255)
+  category     String?  @db.VarChar(255)
+  users        users?   @relation(fields: [organizer_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "events_ibfk_1")
+
+  @@index([organizer_id], map: "organizer_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model friend_requests {
+  id                                       Int      @id @default(autoincrement())
+  sender_id                                Int?
+  receiver_id                              Int?
+  status                                   String?  @default("pending") @db.VarChar(255)
+  created_at                               DateTime @default(now()) @db.Timestamp(0)
+  users_friend_requests_sender_idTousers   users?   @relation("friend_requests_sender_idTousers", fields: [sender_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "friend_requests_ibfk_1")
+  users_friend_requests_receiver_idTousers users?   @relation("friend_requests_receiver_idTousers", fields: [receiver_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "friend_requests_ibfk_2")
+
+  @@index([receiver_id], map: "receiver_id")
+  @@index([sender_id], map: "sender_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model friendships {
+  id                                 Int      @id @default(autoincrement())
+  user_id                            Int?
+  friend_id                          Int?
+  status                             String?  @db.VarChar(255)
+  created_at                         DateTime @default(now()) @db.Timestamp(0)
+  users_friendships_user_idTousers   users?   @relation("friendships_user_idTousers", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "friendships_ibfk_1")
+  users_friendships_friend_idTousers users?   @relation("friendships_friend_idTousers", fields: [friend_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "friendships_ibfk_2")
+
+  @@index([friend_id], map: "friend_id")
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model likes {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  target_id   Int?
+  target_type String?  @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "likes_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model message_media {
+  id         Int       @id @default(autoincrement())
+  message_id Int?
+  media_url  String?   @db.VarChar(255)
+  media_type String?   @db.VarChar(255)
+  file_name  String?   @db.VarChar(255)
+  file_size  String?   @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  messages   messages? @relation(fields: [message_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "message_media_ibfk_1")
+
+  @@index([message_id], map: "message_id")
+}
+
+model message_replies {
+  id                                             Int       @id @default(autoincrement())
+  message_id                                     Int?
+  reply_to_id                                    Int?
+  created_at                                     DateTime  @default(now()) @db.Timestamp(0)
+  messages_message_replies_message_idTomessages  messages? @relation("message_replies_message_idTomessages", fields: [message_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "message_replies_ibfk_1")
+  messages_message_replies_reply_to_idTomessages messages? @relation("message_replies_reply_to_idTomessages", fields: [reply_to_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "message_replies_ibfk_2")
+
+  @@index([message_id], map: "message_id")
+  @@index([reply_to_id], map: "reply_to_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model messages {
+  id                                                    Int               @id @default(autoincrement())
+  conversation_id                                       Int?
+  user_id                                               Int?
+  content                                               String?           @db.Text
+  timestamp                                             DateTime          @default(now()) @db.Timestamp(0)
+  is_read                                               Boolean?          @default(false)
+  delivered_at                                          DateTime          @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  is_deleted                                            Boolean?          @default(false)
+  conversations_conversations_last_message_idTomessages conversations[]   @relation("conversations_last_message_idTomessages")
+  message_media                                         message_media[]
+  message_replies_message_replies_message_idTomessages  message_replies[] @relation("message_replies_message_idTomessages")
+  message_replies_message_replies_reply_to_idTomessages message_replies[] @relation("message_replies_reply_to_idTomessages")
+  conversations_messages_conversation_idToconversations conversations?    @relation("messages_conversation_idToconversations", fields: [conversation_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "messages_ibfk_1")
+  users                                                 users?            @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "messages_ibfk_2")
+
+  @@index([conversation_id], map: "conversation_id")
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model notifications {
+  id                                  Int      @id @default(autoincrement())
+  user_id                             Int?
+  type                                String?  @db.VarChar(255)
+  content                             String?  @db.Text
+  actor_id                            Int?
+  target_id                           Int?
+  read                                Boolean? @default(false)
+  created_at                          DateTime @default(now()) @db.Timestamp(0)
+  users_notifications_user_idTousers  users?   @relation("notifications_user_idTousers", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "notifications_ibfk_1")
+  users_notifications_actor_idTousers users?   @relation("notifications_actor_idTousers", fields: [actor_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "notifications_ibfk_2")
+
+  @@index([actor_id], map: "actor_id")
+  @@index([user_id], map: "user_id")
+}
+
+model notifications_settings {
+  user_id         Int      @id
+  likes           Boolean? @default(true)
+  comments        Boolean? @default(true)
+  messages        Boolean? @default(true)
+  friend_requests Boolean? @default(true)
+  events          Boolean? @default(true)
+  users           users    @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "notifications_settings_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model post_media {
+  id         Int      @id @default(autoincrement())
+  post_id    Int?
+  media_url  String?  @db.VarChar(255)
+  media_type String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  posts      posts?   @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "post_media_ibfk_1")
+
+  @@index([post_id], map: "post_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model posts {
+  id             Int              @id @default(autoincrement())
+  user_id        Int?
+  content        String?          @db.Text
+  feeling        String?          @db.VarChar(255)
+  location       String?          @db.VarChar(255)
+  tagged_users   String?          @db.Text
+  created_at     DateTime         @default(now()) @db.Timestamp(0)
+  updated_at     DateTime         @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  comments       comments[]
+  post_media     post_media[]
+  users          users?           @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "posts_ibfk_1")
+  trending_posts trending_posts[]
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model privacy_settings {
+  user_id                Int      @id
+  profile_visibility     String?  @default("public") @db.VarChar(255)
+  post_visibility        String?  @default("public") @db.VarChar(255)
+  friend_list_visibility String?  @default("public") @db.VarChar(255)
+  online_status          Boolean? @default(true)
+  contact_visibility     String?  @default("friends") @db.VarChar(255)
+  users                  users    @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "privacy_settings_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model reactions {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  target_id   Int?
+  target_type String?  @db.VarChar(255)
+  reaction    String?  @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "reactions_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model roles {
+  id          Int      @id @default(autoincrement())
+  name        String?  @unique(map: "name") @db.VarChar(255)
+  description String?  @db.Text
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model stories {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  media_url  String?  @db.VarChar(255)
+  media_type String?  @db.VarChar(255)
+  caption    String?  @db.Text
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  expires_at DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  views      Int?     @default(0)
+  users      users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "stories_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model trending_news {
+  id           Int      @id @default(autoincrement())
+  title        String?  @db.VarChar(255)
+  excerpt      String?  @db.Text
+  source       String?  @db.VarChar(255)
+  published_at DateTime @default(now()) @db.Timestamp(0)
+  image        String?  @db.VarChar(255)
+  read_time    String?  @db.VarChar(255)
+  category     String?  @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model trending_posts {
+  id         Int      @id @default(autoincrement())
+  post_id    Int?
+  user_id    Int?
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  topics     String?  @db.Text
+  posts      posts?   @relation(fields: [post_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "trending_posts_ibfk_1")
+  users      users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "trending_posts_ibfk_2")
+
+  @@index([post_id], map: "post_id")
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model trending_topics {
+  id       Int     @id @default(autoincrement())
+  name     String? @db.VarChar(255)
+  count    Int?
+  change   String? @db.VarChar(255)
+  category String? @db.VarChar(255)
+  rank     Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_contacts {
+  id            Int      @id @default(autoincrement())
+  user_id       Int?
+  contact_type  String?  @db.VarChar(255)
+  contact_value String?  @db.VarChar(255)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "user_contacts_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model user_education {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  school_name String?  @db.VarChar(255)
+  degree      String?  @db.VarChar(255)
+  start_year  Int?
+  end_year    Int?
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users?   @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "user_education_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model user_work {
+  id           Int       @id @default(autoincrement())
+  user_id      Int?
+  company_name String?   @db.VarChar(255)
+  position     String?   @db.VarChar(255)
+  start_date   DateTime? @db.Date
+  end_date     DateTime? @db.Date
+  created_at   DateTime  @default(now()) @db.Timestamp(0)
+  users        users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "user_work_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                                                 Int                         @id @default(autoincrement())
+  full_name                                          String?                     @db.VarChar(255)
+  username                                           String?                     @unique(map: "username") @db.VarChar(255)
+  email                                              String?                     @unique(map: "email") @db.VarChar(255)
+  password_hash                                      String?                     @db.VarChar(255)
+  role_id                                            Int?
+  avatar                                             String?                     @db.VarChar(255)
+  cover_photo                                        String?                     @db.VarChar(255)
+  bio                                                String?                     @db.Text
+  location                                           String?                     @db.VarChar(255)
+  workplace                                          String?                     @db.VarChar(255)
+  education                                          String?                     @db.VarChar(255)
+  birth_date                                         DateTime?                   @db.Date
+  gender                                             String?                     @db.VarChar(255)
+  relationship_status                                String?                     @db.VarChar(255)
+  is_online                                          Boolean?                    @default(false)
+  interests                                          String?                     @db.Text
+  last_seen                                          DateTime                    @default(now()) @db.Timestamp(0)
+  website                                            String?                     @db.VarChar(255)
+  join_date                                          DateTime                    @default(now()) @db.Timestamp(0)
+  created_at                                         DateTime                    @default(now()) @db.Timestamp(0)
+  updated_at                                         DateTime                    @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  is_active                                          Boolean?                    @default(true)
+  email_verified_at                                  DateTime                    @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  calls_calls_caller_idTousers                       calls[]                     @relation("calls_caller_idTousers")
+  calls_calls_receiver_idTousers                     calls[]                     @relation("calls_receiver_idTousers")
+  comments                                           comments[]
+  conversation_participants                          conversation_participants[]
+  conversations                                      conversations[]
+  events                                             events[]
+  friend_requests_friend_requests_sender_idTousers   friend_requests[]           @relation("friend_requests_sender_idTousers")
+  friend_requests_friend_requests_receiver_idTousers friend_requests[]           @relation("friend_requests_receiver_idTousers")
+  friendships_friendships_user_idTousers             friendships[]               @relation("friendships_user_idTousers")
+  friendships_friendships_friend_idTousers           friendships[]               @relation("friendships_friend_idTousers")
+  likes                                              likes[]
+  messages                                           messages[]
+  notifications_notifications_user_idTousers         notifications[]             @relation("notifications_user_idTousers")
+  notifications_notifications_actor_idTousers        notifications[]             @relation("notifications_actor_idTousers")
+  notifications_settings                             notifications_settings?
+  posts                                              posts[]
+  privacy_settings                                   privacy_settings?
+  reactions                                          reactions[]
+  stories                                            stories[]
+  trending_posts                                     trending_posts[]
+  user_contacts                                      user_contacts[]
+  user_education                                     user_education[]
+  user_work                                          user_work[]
+  roles                                              roles?                      @relation(fields: [role_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_1")
+
+  @@index([role_id], map: "role_id")
 }
