@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './resources/users/users.module';
 import { PrismaModule } from './resources/prisma/prisma.module';
+import { RolesModule } from './roles/roles.module';
+import { PrivacySettingsService } from './privacy-settings/privacy-settings.service';
+import { PrivacySettingsModule } from './privacy-settings/privacy-settings.module';
+import { UserModule } from './user/user.module';
+import { NotificationsSettingModule } from './notifications-setting/notifications-setting.module';
+import { ModuleService } from './controller/module/module.service';
 
 @Module({
-  imports: [UsersModule, PrismaModule],
+  imports: [PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrivacySettingsService, ModuleService],
 })
 export class AppModule {}
