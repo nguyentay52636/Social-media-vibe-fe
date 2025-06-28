@@ -12,9 +12,10 @@ import { ModuleService } from './controller/module/module.service';
 import { JwtServiceCustom } from './jwt/jwt.service';
 import { JwtModuleCustom } from './jwt/jwt.module';
 import { AuthModule } from './resources/auth/auth.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModuleCustom, AuthModule],
+  imports: [ConfigModule.forRoot(), PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModuleCustom, AuthModule, CommentsModule,CommentsModule],
   controllers: [AppController],
   providers: [AppService, PrivacySettingsService, ModuleService, JwtServiceCustom],
 })
