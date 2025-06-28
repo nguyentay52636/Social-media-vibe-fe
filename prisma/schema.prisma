@@ -379,7 +379,7 @@ model users {
   full_name                                          String?                     @db.VarChar(255)
   username                                           String?                     @unique(map: "username") @db.VarChar(255)
   email                                              String?                     @unique(map: "email") @db.VarChar(255)
-  password_hash                                      String?                     @db.VarChar(255)
+  password                              String?                     @db.VarChar(255)
   role_id                                            Int?
   avatar                                             String?                     @db.VarChar(255)
   cover_photo                                        String?                     @db.VarChar(255)

@@ -20,7 +20,7 @@ export class CreateUserDto {
   @ApiProperty({ description: 'Password hash', required: false })
   @IsString()
   @IsOptional()
-  password_hash?: string;
+  password?: string;
 
   @ApiProperty({ description: 'Role ID', required: false })
   @IsInt()
