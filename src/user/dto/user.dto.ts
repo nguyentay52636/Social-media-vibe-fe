@@ -25,6 +25,11 @@ export class UserDto {
   @IsOptional()
   email?: string;
 
+  @ApiProperty({ description: 'Password hash', required: false })
+  @IsString()
+  @IsOptional()
+  password?: string;
+
   @ApiProperty({ description: 'Role ID', required: false })
   @IsInt()
   @IsOptional()

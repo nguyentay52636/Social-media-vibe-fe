@@ -13,6 +13,7 @@ async function bootstrap() {
     .setDescription('social media vibe api ') 
     .setVersion('1.0')
     .addTag('users') 
+    .addTag('Authentication')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

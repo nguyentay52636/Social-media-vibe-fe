@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './resources/prisma/prisma.module';
@@ -8,12 +9,13 @@ import { PrivacySettingsModule } from './privacy-settings/privacy-settings.modul
 import { UserModule } from './user/user.module';
 import { NotificationsSettingModule } from './notifications-setting/notifications-setting.module';
 import { ModuleService } from './controller/module/module.service';
-import { JwtService } from './jwt/jwt.service';
-import { JwtModule } from './jwt/jwt.module';
+import { JwtServiceCustom } from './jwt/jwt.service';
+import { JwtModuleCustom } from './jwt/jwt.module';
+import { AuthModule } from './resources/auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModule],
+  imports: [ConfigModule.forRoot(), PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModuleCustom, AuthModule],
   controllers: [AppController],
-  providers: [AppService, PrivacySettingsService, ModuleService, JwtService],
+  providers: [AppService, PrivacySettingsService, ModuleService, JwtServiceCustom],
 })
 export class AppModule {}

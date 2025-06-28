@@ -78,6 +78,7 @@ export class UserService {
       full_name: user.full_name,
       username: user.username,
       email: user.email,
+      password: user.password,
       role_id: user.role_id,
       avatar: user.avatar,
       cover_photo: user.cover_photo,
