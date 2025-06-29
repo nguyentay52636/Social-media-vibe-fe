@@ -7,7 +7,6 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Cấu hình Swagger
   const config = new DocumentBuilder()
   .setTitle('Social Media API')
     .setDescription('social media vibe api ') 

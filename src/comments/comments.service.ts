@@ -7,7 +7,6 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 export class CommentsService {
   constructor(private prisma: PrismaService) {}
 
-  // Constants for reusable select patterns
   private readonly USER_SELECT = {
     id: true,
     username: true,

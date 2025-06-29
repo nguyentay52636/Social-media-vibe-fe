@@ -13,9 +13,11 @@ import { JwtServiceCustom } from './jwt/jwt.service';
 import { JwtModuleCustom } from './jwt/jwt.module';
 import { AuthModule } from './resources/auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
+import { PostsModule } from './posts/posts.module';
+import { ChatModule } from './resources/chats/chats.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModuleCustom, AuthModule, CommentsModule,CommentsModule],
+  imports: [ConfigModule.forRoot(), PrismaModule, RolesModule, PrivacySettingsModule, UserModule, NotificationsSettingModule, JwtModuleCustom, AuthModule, CommentsModule,CommentsModule, PostsModule, ChatModule ],
   controllers: [AppController],
   providers: [AppService, PrivacySettingsService, ModuleService, JwtServiceCustom],
 })
