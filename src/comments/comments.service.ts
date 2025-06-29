@@ -7,56 +7,84 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 export class CommentsService {
   constructor(private prisma: PrismaService) {}
 
+  // Constants for reusable select patterns
+  private readonly USER_SELECT = {
+    id: true,
+    username: true,
+    email: true,
+    full_name: true,
+    avatar: true,
+    bio: true,
+    created_at: true,
+    updated_at: true,
+  };
+
+  private readonly USER_SELECT_SIMPLE = {
+    id: true,
+    username: true,
+    full_name: true,
+    avatar: true,
+  };
+
+  private readonly USER_SELECT_COMMENT = {
+    id: true,
+    username: true,
+    email: true,
+    full_name: true,
+    avatar: true,
+    bio: true,
+  };
+
+  private readonly POST_SELECT = {
+    id: true,
+    content: true,
+    user_id: true,
+    feeling: true,
+    location: true,
+    tagged_users: true,
+    created_at: true,
+    updated_at: true,
+    post_media: true,
+    _count: {
+      select: {
+        comments: true,
+        post_media: true,
+        trending_posts: true,
+      },
+    },
+    users: {
+      select: this.USER_SELECT_SIMPLE,
+    },
+  };
+
+  private readonly COMMENT_MEDIA_SELECT = true;
+
+  private readonly NESTED_COMMENTS_INCLUDE = {
+    users: {
+      select: this.USER_SELECT_COMMENT,
+    },
+    comment_media: this.COMMENT_MEDIA_SELECT,
+  };
+
+  // Helper method to get the complete include pattern
+  private getCommentInclude() {
+    return {
+      users: {
+        select: this.USER_SELECT,
+      },
+      posts: {
+        select: this.POST_SELECT,
+      },
+      comment_media: this.COMMENT_MEDIA_SELECT,
+      comments: {
+        include: this.NESTED_COMMENTS_INCLUDE,
+      },
+    };
+  }
+
   async getAllComments() {
     return this.prisma.comments.findMany({
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            full_name: true,
-            avatar: true,
-            bio: true,
-            created_at: true,
-            updated_at: true,
-          }
-        },
-        posts: {
-          select: {
-            id: true,
-            content: true,
-            user_id: true,
-            created_at: true,
-            updated_at: true,
-            post_media: true,
-            users: {
-              select: {
-                id: true,
-                username: true,
-                full_name: true,
-                avatar: true,
-              }
-            }
-          }
-        },
-        comment_media: true,
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                full_name: true,
-                avatar: true,
-                bio: true,
-              }
-            },
-            comment_media: true,
-          }
-        },
-      },
+      include: this.getCommentInclude(),
     });
   }
 
@@ -86,7 +114,6 @@ export class CommentsService {
       }
     }
 
-    // Tạo comment và media đi kèm
     return this.prisma.comments.create({
       data: {
         content: createCommentDto.content,
@@ -100,54 +127,7 @@ export class CommentsService {
           })),
         },
       },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            full_name: true,
-            avatar: true,
-            bio: true,
-            created_at: true,
-            updated_at: true,
-          }
-        },
-        posts: {
-          select: {
-            id: true,
-            content: true,
-            user_id: true,
-            created_at: true,
-            updated_at: true,
-            post_media: true,
-            users: {
-              select: {
-                id: true,
-                username: true,
-                full_name: true,
-                avatar: true,
-              }
-            }
-          }
-        },
-        comment_media: true,
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                full_name: true,
-                avatar: true,
-                bio: true,
-              }
-            },
-            comment_media: true,
-          }
-        },
-      },
+      include: this.getCommentInclude(),
     });
   }
 
@@ -161,108 +141,14 @@ export class CommentsService {
 
     return this.prisma.comments.findMany({
       where: { post_id: postId },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            full_name: true,
-            avatar: true,
-            bio: true,
-            created_at: true,
-            updated_at: true,
-          }
-        },
-        posts: {
-          select: {
-            id: true,
-            content: true,
-            user_id: true,
-            created_at: true,
-            updated_at: true,
-            post_media: true,
-            users: {
-              select: {
-                id: true,
-                username: true,
-                full_name: true,
-                avatar: true,
-              }
-            }
-          }
-        },
-        comment_media: true,
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                full_name: true,
-                avatar: true,
-                bio: true,
-              }
-            },
-            comment_media: true,
-          }
-        },
-      },
+      include: this.getCommentInclude(),
     });
   }
 
   async findOne(id: number) {
     const comment = await this.prisma.comments.findUnique({
       where: { id },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            full_name: true,
-            avatar: true,
-            bio: true,
-            created_at: true,
-            updated_at: true,
-          }
-        },
-        posts: {
-          select: {
-            id: true,
-            content: true,
-            user_id: true,
-            created_at: true,
-            updated_at: true,
-            post_media: true,
-            users: {
-              select: {
-                id: true,
-                username: true,
-                full_name: true,
-                avatar: true,
-              }
-            }
-          }
-        },
-        comment_media: true,
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                full_name: true,
-                avatar: true,
-                bio: true,
-              }
-            },
-            comment_media: true,
-          }
-        },
-      },
+      include: this.getCommentInclude(),
     });
     if (!comment) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
@@ -276,7 +162,6 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
-    // Xóa media cũ và thêm media mới
     await this.prisma.comment_media.deleteMany({ where: { comment_id: id } });
 
     return this.prisma.comments.update({
@@ -290,54 +175,7 @@ export class CommentsService {
           })),
         },
       },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-            full_name: true,
-            avatar: true,
-            bio: true,
-            created_at: true,
-            updated_at: true,
-          }
-        },
-        posts: {
-          select: {
-            id: true,
-            content: true,
-            user_id: true,
-            created_at: true,
-            updated_at: true,
-            post_media: true,
-            users: {
-              select: {
-                id: true,
-                username: true,
-                full_name: true,
-                avatar: true,
-              }
-            }
-          }
-        },
-        comment_media: true,
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                full_name: true,
-                avatar: true,
-                bio: true,
-              }
-            },
-            comment_media: true,
-          }
-        },
-      },
+      include: this.getCommentInclude(),
     });
   }
 
